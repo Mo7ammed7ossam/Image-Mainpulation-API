@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\V1;
 
+use Illuminate\Http\Request;
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAlbumRequest;
 use App\Http\Requests\UpdateAlbumRequest;
 use App\Http\Resources\V1\AlbumResource;
+
 use App\Models\Album;
 
 class AlbumController extends Controller
@@ -15,14 +18,14 @@ class AlbumController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         // $albums = Album::all();
         // return $albums;
 
         // return AlbumResource::collection(Album::all());
 
-        return AlbumResource::collection(Album::paginate(2));
+        return AlbumResource::collection(Album::where('user_id', $request->user()->id)->paginate(2));
 
     }
 
@@ -34,7 +37,9 @@ class AlbumController extends Controller
      */
     public function store(StoreAlbumRequest $request)
     {
-        $album = Album::create($request->all());
+        $data = $request->all();
+        $data['user_id'] = $request->user()->id;
+        $album = Album::create($data);
 
         return new AlbumResource($album);
     }
@@ -45,8 +50,12 @@ class AlbumController extends Controller
      * @param  \App\Models\Album  $album
      * @return \Illuminate\Http\Response
      */
-    public function show(Album $album)
+    public function show(Request $request, Album $album)
     {
+        if ($request->user()->id != $album->user_id):
+            return abort(404, 'Un_Authorizes');
+        endif;
+
         return new AlbumResource($album);
     }
 
@@ -59,8 +68,11 @@ class AlbumController extends Controller
      */
     public function update(UpdateAlbumRequest $request, Album $album)
     {
-        $album->update($request->all());
+        if ($request->user()->id != $album->user_id):
+            return abort(404, 'Un_Authorizes');
+        endif;
 
+        $album->update($request->all());
         return new AlbumResource($album);
     }
 
@@ -70,10 +82,13 @@ class AlbumController extends Controller
      * @param  \App\Models\Album  $album
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Album $album)
+    public function destroy(Request $request, Album $album)
     {
-        $album->delete();
+        if ($request->user()->id != $album->user_id):
+            return abort(404, 'Un_Authorizes');
+        endif;
 
+        $album->delete();
         return response('deleted', 204);
     }
 }

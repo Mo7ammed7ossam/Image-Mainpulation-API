@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,16 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::middleware('auth')->group(function(){
+
+    Route::get('/dashboard',[DashboardController::class, 'dashboard'])->name('dashboard');    
+
+    Route::prefix('token')->group(function(){
+        Route::get('/create',[DashboardController::class, 'showTokenForm'])->name('token.showForm');
+        Route::post('/create',[DashboardController::class, 'createToken'])->name('token.create');
+        Route::post('/delete/{token}',[DashboardController::class, 'deleteToken'])->name('token.delete');
+    });
+});
+
+require __DIR__.'/auth.php';

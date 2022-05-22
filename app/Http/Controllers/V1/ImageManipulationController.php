@@ -5,10 +5,11 @@ namespace App\Http\Controllers\V1;
 use App\Http\Controllers\Controller;
 
 use App\Http\Requests\ResizeImageRequest;
-
+use App\Http\Resources\V1\ImageManipulationResoure;
 use App\Models\Album;
 use App\Models\ImageManipulation;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -24,11 +25,9 @@ class ImageManipulationController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request, )
     {
-        $images_data = ImageManipulation::all();
-
-        return $images_data;
+        return ImageManipulationResoure::collection(ImageManipulation::where('user_id', $request->user()->id)->paginate(2));
     }
 
 
@@ -38,9 +37,14 @@ class ImageManipulationController extends Controller
      * @param  \App\Models\Album  $album
      * @return \Illuminate\Http\Response
      */
-    public function byAlbum(Album $album)
+    public function byAlbum(Request $request, Album $album)
     {
+        if ($request->user()->id != $album->user_id):
+            return abort(404, 'Un_Authorizes');
+        endif;
 
+        $where = ['album_id' => $album->id];
+        return ImageManipulationResoure::collection(ImageManipulation::where($where)->paginate(2));
     }
 
     /**
@@ -60,10 +64,16 @@ class ImageManipulationController extends Controller
        $data = [
            'type' => ImageManipulation::TYPE_RESIZE,
            'data' => json_encode($all),
-           'user_id' => null
+           'user_id' => $request->user()->id
        ];
 
         if(isset($all['album_id'])):
+            $album = Album::find($all['album_id']);
+
+            if ($request->user()->id != $album->user_id):
+                return abort(404, 'Un_Authorizes');
+            endif;
+    
             $data['album_id'] = $all ['album_id'];   
         endif;
 
@@ -103,7 +113,7 @@ class ImageManipulationController extends Controller
         $data['output_path'] = $dir.$resized_file_name;
 
         $imageManipulation = ImageManipulation::create($data);
-        return $imageManipulation;
+        return new ImageManipulationResoure($imageManipulation);
         
     }
 
@@ -113,9 +123,13 @@ class ImageManipulationController extends Controller
      * @param  \App\Models\ImageManipulation  $imageManipulation
      * @return \Illuminate\Http\Response
      */
-    public function show(ImageManipulation $imageManipulation)
+    public function show(Request $request, ImageManipulation $image)
     {
-        return $imageManipulation;
+        if ($request->user()->id != $image->user_id):
+            return abort(404, 'Un_Authorizes');
+        endif;
+
+        return new ImageManipulationResoure($image);
     }
 
  
@@ -125,10 +139,13 @@ class ImageManipulationController extends Controller
      * @param  \App\Models\ImageManipulation  $imageManipulation
      * @return \Illuminate\Http\Response
      */
-    public function destroy(ImageManipulation $imageManipulation)
+    public function destroy(Request $request, ImageManipulation $image)
     {
-        $imageManipulation->delete();
+        if ($request->user()->id != $image->user_id):
+            return abort(404, 'Un_Authorizes');
+        endif;
 
+        $image->delete();
         return response('deleted', 204);
     }
 
