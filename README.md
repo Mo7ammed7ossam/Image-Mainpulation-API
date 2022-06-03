@@ -3,6 +3,11 @@ simple API for resizeing images using laravel and image-intervention framework
 
 ## Simple demo
 
+https://user-images.githubusercontent.com/48841023/171942852-1c0e7b5a-f7f3-4741-8caa-f81b251efaaf.mp4
+
+https://user-images.githubusercontent.com/48841023/171943569-712c29d0-ad29-4e71-af87-4ea879951481.mp4
+
+
 #### Test locally
 Download [postman_collection.json](postman_collection.json) file, import it in your postman and test locally.
 
